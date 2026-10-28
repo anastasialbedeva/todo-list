@@ -129,8 +129,15 @@ function buildFooter() {
   );
 }
 
+/** Подключаем стили через JS, чтобы в HTML был только скрипт */
+function loadStyles() {
+  const link = createElement('link', { attrs: { rel: 'stylesheet', href: 'style.css' } });
+  document.head.append(link);
+}
+
 function buildLayout() {
   document.title = 'To-Do List';
+  loadStyles();
 
   const main = createElement('main', { className: 'app-main' },
     buildFormSection(),

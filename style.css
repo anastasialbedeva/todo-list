@@ -1,0 +1,274 @@
+/* ==========================================================================
+   Переменные и базовые стили
+   ========================================================================== */
+
+:root {
+  --color-bg: #f3f4f8;
+  --color-surface: #ffffff;
+  --color-text: #1f2333;
+  --color-muted: #6b7086;
+  --color-border: #dfe2ec;
+  --color-primary: #4f5bd5;
+  --color-primary-hover: #3f4ac0;
+  --color-success: #2e9e6a;
+  --color-danger: #d64545;
+  --color-warning: #c7811d;
+  --radius: 12px;
+  --shadow: 0 4px 18px rgba(31, 35, 51, 0.07);
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+/* ==========================================================================
+   Каркас приложения
+   ========================================================================== */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 24px 16px;
+  gap: 20px;
+}
+
+.app-header {
+  text-align: center;
+}
+
+.app-header__title {
+  font-size: clamp(1.8rem, 5vw, 2.6rem);
+  color: var(--color-primary);
+}
+
+.app-header__subtitle {
+  margin-top: 4px;
+  color: var(--color-muted);
+}
+
+.app-main {
+  display: grid;
+  gap: 16px;
+  flex: 1;
+}
+
+.app-footer {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+/* ==========================================================================
+   Панели
+   ========================================================================== */
+
+.panel {
+  padding: 20px;
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.panel__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.panel__title {
+  font-size: 1.15rem;
+  margin-bottom: 12px;
+}
+
+.panel__head .panel__title {
+  margin-bottom: 0;
+}
+
+.counter {
+  font-size: 0.9rem;
+  color: var(--color-muted);
+}
+
+/* ==========================================================================
+   Поля и кнопки
+   ========================================================================== */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.field__label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.field__input {
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.field__input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(79, 91, 213, 0.18);
+}
+
+.button {
+  min-height: 42px;
+  padding: 8px 16px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.button--primary {
+  color: #fff;
+  background: var(--color-primary);
+}
+
+.button--primary:hover {
+  background: var(--color-primary-hover);
+}
+
+.button--ghost {
+  background: transparent;
+  border-color: var(--color-border);
+}
+
+.button--ghost:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.button--danger:hover {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.button--small {
+  min-height: 34px;
+  padding: 4px 10px;
+  font-size: 0.85rem;
+}
+
+/* ==========================================================================
+   Форма и панель управления
+   ========================================================================== */
+
+.task-form {
+  display: grid;
+  grid-template-columns: 1fr 180px auto;
+  align-items: end;
+  gap: 12px;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 12px;
+}
+
+/* ==========================================================================
+   Список задач
+   ========================================================================== */
+
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.empty-message {
+  padding: 24px 0 8px;
+  text-align: center;
+  color: var(--color-muted);
+}
+
+/* ==========================================================================
+   Адаптивность
+   ========================================================================== */
+
+@media (max-width: 720px) {
+  .task-form {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .task-form .field:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .controls {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .controls .field:first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 480px) {
+  .app {
+    padding: 16px 10px;
+  }
+
+  .panel {
+    padding: 14px;
+  }
+
+  .task-form,
+  .controls {
+    grid-template-columns: 1fr;
+  }
+
+  .task-form__submit {
+    width: 100%;
+  }
+}
