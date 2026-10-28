@@ -150,11 +150,100 @@ function buildLayout() {
 }
 
 /* ==========================================================================
+   Состояние приложения
+   ========================================================================== */
+
+/**
+ * @typedef {Object} Task
+ * @property {string} id
+ * @property {string} title
+ * @property {string} date — дата в формате YYYY-MM-DD или пустая строка
+ * @property {boolean} done
+ * @property {number} createdAt
+ */
+
+/** @type {Task[]} — порядок в массиве = пользовательский порядок задач */
+let tasks = [];
+
+function generateId() {
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function addTask(title, date) {
+  tasks.push({
+    id: generateId(),
+    title,
+    date,
+    done: false,
+    createdAt: Date.now(),
+  });
+  renderTasks();
+}
+
+/* ==========================================================================
+   Отрисовка задач
+   ========================================================================== */
+
+function formatDate(isoDate) {
+  if (!isoDate) return 'Без даты';
+  const [year, month, day] = isoDate.split('-').map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString('ru-RU', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+}
+
+function createTaskElement(task) {
+  const title = createElement('p', { className: 'task-item__title', text: task.title });
+  const date = createElement('time', {
+    className: 'task-item__date',
+    text: formatDate(task.date),
+    attrs: task.date ? { datetime: task.date } : {},
+  });
+
+  const body = createElement('div', { className: 'task-item__body' }, title, date);
+
+  return createElement('li', { className: 'task-item', attrs: { 'data-id': task.id } }, body);
+}
+
+function renderTasks() {
+  ui.list.replaceChildren(...tasks.map(createTaskElement));
+
+  ui.emptyMessage.hidden = tasks.length > 0;
+  ui.counter.textContent = `Всего задач: ${tasks.length}`;
+}
+
+/* ==========================================================================
+   Обработчики событий
+   ========================================================================== */
+
+function handleFormSubmit(event) {
+  event.preventDefault();
+  const title = ui.titleInput.value.trim();
+  if (!title) {
+    ui.titleInput.value = '';
+    ui.titleInput.focus();
+    return;
+  }
+
+  addTask(title, ui.dateInput.value);
+  ui.form.reset();
+  ui.titleInput.focus();
+}
+
+function bindEvents() {
+  ui.form.addEventListener('submit', handleFormSubmit);
+}
+
+/* ==========================================================================
    Запуск
    ========================================================================== */
 
 function init() {
   buildLayout();
+  bindEvents();
+  renderTasks();
 }
 
 document.addEventListener('DOMContentLoaded', init);
