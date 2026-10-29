@@ -180,6 +180,18 @@ function addTask(title, date) {
   renderTasks();
 }
 
+function deleteTask(id) {
+  tasks = tasks.filter((task) => task.id !== id);
+  renderTasks();
+}
+
+function toggleTask(id) {
+  const task = tasks.find((item) => item.id === id);
+  if (!task) return;
+  task.done = !task.done;
+  renderTasks();
+}
+
 /* ==========================================================================
    Отрисовка задач
    ========================================================================== */
@@ -202,16 +214,33 @@ function createTaskElement(task) {
     attrs: task.date ? { datetime: task.date } : {},
   });
 
+  const checkbox = createElement('input', {
+    className: 'task-item__check',
+    attrs: { type: 'checkbox', 'data-action': 'toggle', 'aria-label': 'Отметить как выполненную' },
+  });
+  checkbox.checked = task.done;
+
   const body = createElement('div', { className: 'task-item__body' }, title, date);
 
-  return createElement('li', { className: 'task-item', attrs: { 'data-id': task.id } }, body);
+  const deleteButton = createElement('button', {
+    className: 'button button--ghost button--danger button--small',
+    text: 'Удалить',
+    attrs: { type: 'button', 'data-action': 'delete' },
+  });
+  const actions = createElement('div', { className: 'task-item__actions' }, deleteButton);
+
+  const item = createElement('li', { className: 'task-item', attrs: { 'data-id': task.id } },
+    checkbox, body, actions);
+  item.classList.toggle('task-item--done', task.done);
+  return item;
 }
 
 function renderTasks() {
   ui.list.replaceChildren(...tasks.map(createTaskElement));
 
+  const doneCount = tasks.filter((task) => task.done).length;
   ui.emptyMessage.hidden = tasks.length > 0;
-  ui.counter.textContent = `Всего задач: ${tasks.length}`;
+  ui.counter.textContent = `Всего: ${tasks.length} · Выполнено: ${doneCount}`;
 }
 
 /* ==========================================================================
@@ -232,8 +261,29 @@ function handleFormSubmit(event) {
   ui.titleInput.focus();
 }
 
+/** Делегирование событий: один обработчик на весь список */
+function handleListClick(event) {
+  const actionElement = event.target.closest('[data-action]');
+  if (!actionElement) return;
+
+  const item = actionElement.closest('.task-item');
+  const { id } = item.dataset;
+
+  switch (actionElement.dataset.action) {
+    case 'toggle':
+      toggleTask(id);
+      break;
+    case 'delete':
+      deleteTask(id);
+      break;
+    default:
+      break;
+  }
+}
+
 function bindEvents() {
   ui.form.addEventListener('submit', handleFormSubmit);
+  ui.list.addEventListener('click', handleListClick);
 }
 
 /* ==========================================================================

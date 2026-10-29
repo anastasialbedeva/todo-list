@@ -255,6 +255,33 @@ select {
   color: var(--color-muted);
 }
 
+.task-item__check {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--color-success);
+  cursor: pointer;
+}
+
+.task-item__actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 6px;
+}
+
+/* Выполненная задача */
+.task-item--done {
+  background: #f6faf8;
+  border-left-color: var(--color-success);
+  opacity: 0.75;
+}
+
+.task-item--done .task-item__title {
+  color: var(--color-muted);
+  text-decoration: line-through;
+}
+
 .empty-message {
   padding: 24px 0 8px;
   text-align: center;
