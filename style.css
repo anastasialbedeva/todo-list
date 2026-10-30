@@ -282,6 +282,23 @@ select {
   text-decoration: line-through;
 }
 
+/* Режим редактирования */
+.task-item--editing {
+  border-left-color: var(--color-warning);
+}
+
+.task-edit {
+  display: grid;
+  grid-template-columns: 1fr 170px auto;
+  gap: 8px;
+  width: 100%;
+}
+
+.task-edit__buttons {
+  display: flex;
+  gap: 6px;
+}
+
 .empty-message {
   padding: 24px 0 8px;
   text-align: center;
@@ -308,6 +325,14 @@ select {
   .controls .field:first-child {
     grid-column: 1 / -1;
   }
+
+  .task-edit {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .task-edit__title {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (max-width: 480px) {
@@ -326,5 +351,22 @@ select {
 
   .task-form__submit {
     width: 100%;
+  }
+
+  .task-item {
+    flex-wrap: wrap;
+  }
+
+  .task-item__body {
+    flex-basis: calc(100% - 40px);
+  }
+
+  .task-item__actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .task-edit {
+    grid-template-columns: 1fr;
   }
 }

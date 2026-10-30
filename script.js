@@ -165,6 +165,9 @@ function buildLayout() {
 /** @type {Task[]} — порядок в массиве = пользовательский порядок задач */
 let tasks = [];
 
+/** id задачи, которая сейчас редактируется (или null) */
+let editingId = null;
+
 function generateId() {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -192,6 +195,29 @@ function toggleTask(id) {
   renderTasks();
 }
 
+function updateTask(id, changes) {
+  const task = tasks.find((item) => item.id === id);
+  if (!task) return;
+  Object.assign(task, changes);
+  editingId = null;
+  renderTasks();
+}
+
+function startEditing(id) {
+  editingId = id;
+  renderTasks();
+  const input = ui.list.querySelector('.task-edit__title');
+  if (input) {
+    input.focus();
+    input.select();
+  }
+}
+
+function cancelEditing() {
+  editingId = null;
+  renderTasks();
+}
+
 /* ==========================================================================
    Отрисовка задач
    ========================================================================== */
@@ -206,7 +232,44 @@ function formatDate(isoDate) {
   });
 }
 
+/** Форма редактирования, которая встаёт на место текста задачи */
+function createEditForm(task) {
+  const titleInput = createElement('input', {
+    className: 'field__input task-edit__title',
+    attrs: { type: 'text', name: 'title', maxlength: '120', required: '', 'aria-label': 'Новое название' },
+  });
+  titleInput.value = task.title;
+
+  const dateInput = createElement('input', {
+    className: 'field__input task-edit__date',
+    attrs: { type: 'date', name: 'date', 'aria-label': 'Новая дата' },
+  });
+  dateInput.value = task.date;
+
+  return createElement('form', { className: 'task-edit', attrs: { 'data-form': 'edit' } },
+    titleInput,
+    dateInput,
+    createElement('div', { className: 'task-edit__buttons' },
+      createElement('button', {
+        className: 'button button--primary button--small',
+        text: 'Сохранить',
+        attrs: { type: 'submit' },
+      }),
+      createElement('button', {
+        className: 'button button--ghost button--small',
+        text: 'Отмена',
+        attrs: { type: 'button', 'data-action': 'cancel' },
+      }),
+    ),
+  );
+}
+
 function createTaskElement(task) {
+  if (task.id === editingId) {
+    return createElement('li', { className: 'task-item task-item--editing', attrs: { 'data-id': task.id } },
+      createEditForm(task));
+  }
+
   const title = createElement('p', { className: 'task-item__title', text: task.title });
   const date = createElement('time', {
     className: 'task-item__date',
@@ -227,7 +290,12 @@ function createTaskElement(task) {
     text: 'Удалить',
     attrs: { type: 'button', 'data-action': 'delete' },
   });
-  const actions = createElement('div', { className: 'task-item__actions' }, deleteButton);
+  const editButton = createElement('button', {
+    className: 'button button--ghost button--small',
+    text: 'Изменить',
+    attrs: { type: 'button', 'data-action': 'edit' },
+  });
+  const actions = createElement('div', { className: 'task-item__actions' }, editButton, deleteButton);
 
   const item = createElement('li', { className: 'task-item', attrs: { 'data-id': task.id } },
     checkbox, body, actions);
@@ -276,14 +344,44 @@ function handleListClick(event) {
     case 'delete':
       deleteTask(id);
       break;
+    case 'edit':
+      startEditing(id);
+      break;
+    case 'cancel':
+      cancelEditing();
+      break;
     default:
       break;
+  }
+}
+
+/** Сохранение формы редактирования (событие submit всплывает до списка) */
+function handleListSubmit(event) {
+  if (event.target.dataset.form !== 'edit') return;
+  event.preventDefault();
+
+  const form = event.target;
+  const { id } = form.closest('.task-item').dataset;
+  const title = form.elements.title.value.trim();
+  if (!title) {
+    form.elements.title.focus();
+    return;
+  }
+
+  updateTask(id, { title, date: form.elements.date.value });
+}
+
+function handleListKeydown(event) {
+  if (event.key === 'Escape' && editingId) {
+    cancelEditing();
   }
 }
 
 function bindEvents() {
   ui.form.addEventListener('submit', handleFormSubmit);
   ui.list.addEventListener('click', handleListClick);
+  ui.list.addEventListener('submit', handleListSubmit);
+  ui.list.addEventListener('keydown', handleListKeydown);
 }
 
 /* ==========================================================================
