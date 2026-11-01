@@ -168,6 +168,46 @@ let tasks = [];
 /** id задачи, которая сейчас редактируется (или null) */
 let editingId = null;
 
+/* ==========================================================================
+   localStorage
+   ========================================================================== */
+
+const STORAGE_KEY = 'todo-list.tasks';
+
+function saveTasks() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+  } catch (error) {
+    console.warn('Не удалось сохранить задачи:', error);
+  }
+}
+
+function loadTasks() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(parsed)) return [];
+    // Отбрасываем повреждённые записи
+    return parsed.filter((task) => task && typeof task.id === 'string' && typeof task.title === 'string')
+      .map((task) => ({
+        id: task.id,
+        title: task.title,
+        date: typeof task.date === 'string' ? task.date : '',
+        done: Boolean(task.done),
+        createdAt: Number(task.createdAt) || Date.now(),
+      }));
+  } catch (error) {
+    console.warn('Не удалось прочитать задачи:', error);
+    return [];
+  }
+}
+
+/** Сохраняет состояние и перерисовывает список — вызывается после любого изменения */
+function commit() {
+  saveTasks();
+  renderTasks();
+}
+
 function generateId() {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -180,19 +220,19 @@ function addTask(title, date) {
     done: false,
     createdAt: Date.now(),
   });
-  renderTasks();
+  commit();
 }
 
 function deleteTask(id) {
   tasks = tasks.filter((task) => task.id !== id);
-  renderTasks();
+  commit();
 }
 
 function toggleTask(id) {
   const task = tasks.find((item) => item.id === id);
   if (!task) return;
   task.done = !task.done;
-  renderTasks();
+  commit();
 }
 
 function updateTask(id, changes) {
@@ -200,7 +240,7 @@ function updateTask(id, changes) {
   if (!task) return;
   Object.assign(task, changes);
   editingId = null;
-  renderTasks();
+  commit();
 }
 
 function startEditing(id) {
@@ -389,6 +429,7 @@ function bindEvents() {
    ========================================================================== */
 
 function init() {
+  tasks = loadTasks();
   buildLayout();
   bindEvents();
   renderTasks();
