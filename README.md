@@ -1,6 +1,6 @@
 # To-Do List
 
-🔗 **Деплой:** https://ВАШ-ЛОГИН.github.io/ИМЯ-РЕПОЗИТОРИЯ/
+🔗 **Деплой:** https://anastasialbedeva.github.io/todo-list/
 
 Веб-приложение для списка дел на чистом JavaScript (DOM API) без фреймворков.
 В `index.html` только каркас и подключение `script.js` — вся страница и подключение стилей создаются из JS.
