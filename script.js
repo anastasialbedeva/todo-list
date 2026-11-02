@@ -112,12 +112,14 @@ function buildListSection() {
   ui.counter = createElement('p', { className: 'counter' });
   ui.list = createElement('ul', { className: 'task-list' });
   ui.emptyMessage = createElement('p', { className: 'empty-message', text: 'Задач пока нет' });
+  ui.dragHint = createElement('p', { className: 'list-hint' });
 
   return createElement('section', { className: 'panel panel--list', attrs: { 'aria-labelledby': 'list-title' } },
     createElement('div', { className: 'panel__head' },
       createElement('h2', { className: 'panel__title', text: 'Список задач', attrs: { id: 'list-title' } }),
       ui.counter,
     ),
+    ui.dragHint,
     ui.list,
     ui.emptyMessage,
   );
@@ -344,9 +346,19 @@ function createTaskElement(task) {
   });
   const actions = createElement('div', { className: 'task-item__actions' }, editButton, deleteButton);
 
-  const item = createElement('li', { className: 'task-item', attrs: { 'data-id': task.id } },
-    checkbox, body, actions);
+  const canDrag = isDragEnabled();
+  const handle = createElement('span', {
+    className: 'task-item__handle',
+    text: '⠿',
+    attrs: { 'aria-hidden': 'true', title: 'Перетащите, чтобы изменить порядок' },
+  });
+
+  const item = createElement('li', {
+    className: 'task-item',
+    attrs: { 'data-id': task.id, draggable: String(canDrag) },
+  }, handle, checkbox, body, actions);
   item.classList.toggle('task-item--done', task.done);
+  item.classList.toggle('task-item--draggable', canDrag);
   return item;
 }
 
@@ -385,6 +397,94 @@ function renderTasks() {
   ui.emptyMessage.textContent = tasks.length === 0
     ? 'Задач пока нет — добавьте первую!'
     : 'Ничего не найдено';
+
+  ui.dragHint.hidden = visible.length < 2;
+  ui.dragHint.textContent = isDragEnabled()
+    ? 'Перетаскивайте задачи мышью, чтобы изменить их порядок'
+    : 'Перетаскивание доступно при сортировке «Свой порядок»';
+}
+
+/* ==========================================================================
+   Drag-and-drop
+   ========================================================================== */
+
+/** Элемент, который сейчас перетаскивается */
+let draggedItem = null;
+
+/** Менять порядок можно только в ручном режиме сортировки и не во время редактирования */
+function isDragEnabled() {
+  return view.sort === 'manual' && editingId === null;
+}
+
+/** Ищет элемент списка, перед которым нужно вставить перетаскиваемый */
+function getElementAfter(clientY) {
+  const items = [...ui.list.querySelectorAll('.task-item:not(.task-item--dragging)')];
+
+  let closest = { offset: Number.NEGATIVE_INFINITY, element: null };
+  items.forEach((item) => {
+    const box = item.getBoundingClientRect();
+    const offset = clientY - box.top - box.height / 2;
+    if (offset < 0 && offset > closest.offset) {
+      closest = { offset, element: item };
+    }
+  });
+  return closest.element;
+}
+
+function handleDragStart(event) {
+  const item = event.target.closest('.task-item');
+  if (!item || !isDragEnabled()) {
+    event.preventDefault();
+    return;
+  }
+
+  draggedItem = item;
+  event.dataTransfer.effectAllowed = 'move';
+  event.dataTransfer.setData('text/plain', item.dataset.id); // нужно для Firefox
+  // Класс добавляем в следующем кадре, чтобы «призрак» элемента остался непрозрачным
+  requestAnimationFrame(() => item.classList.add('task-item--dragging'));
+}
+
+function handleDragOver(event) {
+  if (!draggedItem) return;
+  event.preventDefault();
+  event.dataTransfer.dropEffect = 'move';
+
+  const after = getElementAfter(event.clientY);
+  if (after === null) {
+    ui.list.append(draggedItem);
+  } else if (after !== draggedItem.nextElementSibling) {
+    ui.list.insertBefore(draggedItem, after);
+  }
+}
+
+function handleDrop(event) {
+  if (draggedItem) event.preventDefault();
+}
+
+/**
+ * После перетаскивания переносим новый порядок из DOM в массив задач.
+ * Если включён поиск или фильтр, переставляются только видимые задачи,
+ * а скрытые остаются на своих местах.
+ */
+function handleDragEnd() {
+  if (!draggedItem) return;
+  draggedItem.classList.remove('task-item--dragging');
+  draggedItem = null;
+
+  const orderedIds = [...ui.list.children].map((item) => item.dataset.id);
+  const visibleIds = new Set(orderedIds);
+  const byId = new Map(tasks.map((task) => [task.id, task]));
+
+  const slots = [];
+  tasks.forEach((task, index) => {
+    if (visibleIds.has(task.id)) slots.push(index);
+  });
+  slots.forEach((slot, i) => {
+    tasks[slot] = byId.get(orderedIds[i]);
+  });
+
+  commit();
 }
 
 /* ==========================================================================
@@ -458,6 +558,11 @@ function bindEvents() {
   ui.list.addEventListener('click', handleListClick);
   ui.list.addEventListener('submit', handleListSubmit);
   ui.list.addEventListener('keydown', handleListKeydown);
+
+  ui.list.addEventListener('dragstart', handleDragStart);
+  ui.list.addEventListener('dragover', handleDragOver);
+  ui.list.addEventListener('drop', handleDrop);
+  ui.list.addEventListener('dragend', handleDragEnd);
 
   ui.searchInput.addEventListener('input', () => {
     view.query = ui.searchInput.value;

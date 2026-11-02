@@ -282,6 +282,39 @@ select {
   text-decoration: line-through;
 }
 
+/* Drag-and-drop */
+.list-hint {
+  margin-bottom: 10px;
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+.task-item__handle {
+  flex-shrink: 0;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--color-border);
+  user-select: none;
+}
+
+.task-item--draggable {
+  cursor: grab;
+}
+
+.task-item--draggable .task-item__handle {
+  color: var(--color-muted);
+}
+
+.task-item--draggable:active {
+  cursor: grabbing;
+}
+
+.task-item--dragging {
+  opacity: 0.4;
+  border-style: dashed;
+  border-color: var(--color-primary);
+}
+
 /* Режим редактирования */
 .task-item--editing {
   border-left-color: var(--color-warning);
@@ -355,10 +388,6 @@ select {
 
   .task-item {
     flex-wrap: wrap;
-  }
-
-  .task-item__body {
-    flex-basis: calc(100% - 40px);
   }
 
   .task-item__actions {
