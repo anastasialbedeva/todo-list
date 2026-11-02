@@ -168,6 +168,13 @@ let tasks = [];
 /** id задачи, которая сейчас редактируется (или null) */
 let editingId = null;
 
+/** Настройки отображения: поиск, фильтр по статусу, сортировка */
+const view = {
+  query: '',
+  filter: 'all', // all | active | done
+  sort: 'manual', // manual | date-asc | date-desc
+};
+
 /* ==========================================================================
    localStorage
    ========================================================================== */
@@ -343,12 +350,41 @@ function createTaskElement(task) {
   return item;
 }
 
+/** Сравнение по дате; задачи без даты всегда в конце */
+function compareByDate(a, b, direction) {
+  if (!a.date && !b.date) return 0;
+  if (!a.date) return 1;
+  if (!b.date) return -1;
+  return a.date.localeCompare(b.date) * direction;
+}
+
+/** Задачи, которые нужно показать с учётом поиска, фильтра и сортировки */
+function getVisibleTasks() {
+  const query = view.query.trim().toLowerCase();
+
+  const visible = tasks.filter((task) => {
+    if (view.filter === 'active' && task.done) return false;
+    if (view.filter === 'done' && !task.done) return false;
+    return task.title.toLowerCase().includes(query);
+  });
+
+  if (view.sort === 'date-asc') visible.sort((a, b) => compareByDate(a, b, 1));
+  if (view.sort === 'date-desc') visible.sort((a, b) => compareByDate(a, b, -1));
+
+  return visible;
+}
+
 function renderTasks() {
-  ui.list.replaceChildren(...tasks.map(createTaskElement));
+  const visible = getVisibleTasks();
+  ui.list.replaceChildren(...visible.map(createTaskElement));
 
   const doneCount = tasks.filter((task) => task.done).length;
-  ui.emptyMessage.hidden = tasks.length > 0;
-  ui.counter.textContent = `Всего: ${tasks.length} · Выполнено: ${doneCount}`;
+  ui.counter.textContent = `Всего: ${tasks.length} · Выполнено: ${doneCount} · Показано: ${visible.length}`;
+
+  ui.emptyMessage.hidden = visible.length > 0;
+  ui.emptyMessage.textContent = tasks.length === 0
+    ? 'Задач пока нет — добавьте первую!'
+    : 'Ничего не найдено';
 }
 
 /* ==========================================================================
@@ -422,6 +458,19 @@ function bindEvents() {
   ui.list.addEventListener('click', handleListClick);
   ui.list.addEventListener('submit', handleListSubmit);
   ui.list.addEventListener('keydown', handleListKeydown);
+
+  ui.searchInput.addEventListener('input', () => {
+    view.query = ui.searchInput.value;
+    renderTasks();
+  });
+  ui.filterSelect.addEventListener('change', () => {
+    view.filter = ui.filterSelect.value;
+    renderTasks();
+  });
+  ui.sortSelect.addEventListener('change', () => {
+    view.sort = ui.sortSelect.value;
+    renderTasks();
+  });
 }
 
 /* ==========================================================================
